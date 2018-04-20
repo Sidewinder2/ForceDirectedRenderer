@@ -1,6 +1,8 @@
 import pygame as pg
 import os
-import GraphRenderer
+import UIGraph
+import ClickHandler
+import UIButton
 from random import randint
 
 def main():
@@ -25,17 +27,20 @@ def main():
 
     # create a list of numbers for node names
     nodes = list()
-    for x in range(100):
+    for x in range(200):
         nodes.append(str(x))
     # add a bunch of ndoes to the renderer
-    GraphRenderer.GraphRenderer.addNodes(nodes,screen_width, screen_height)
+    UIGraph.GraphRenderer.addNodes(nodes, screen_width, screen_height)
 
-
-    GraphRenderer.GraphRenderer.selectNodes((0,0),(200,200))
+    # make a test selection
+    UIGraph.GraphRenderer.selectNodes((0, 0), (200, 200))
 
     # randomly add connections between the nodes
-    for x in range(100):
-        GraphRenderer.GraphRenderer.addConnections(nodes[randint(0,len(nodes) -1)], nodes[randint(0,len(nodes) - 1)])
+    for x in range(200):
+        UIGraph.GraphRenderer.addConnections(nodes[randint(0, len(nodes) - 1)], nodes[randint(0, len(nodes) - 1)])
+
+    # create some buttons
+    UIButton.GreenButton(coords = (300,40), dimensions = (200,20), text = "Remove Selected Nodes", color = (255,255,255), text_color = (255,255,255))
 
     # main loop
     while not console_shutdown:
@@ -53,11 +58,11 @@ def main():
             # mouse click
             if event.type == pg.MOUSEBUTTONDOWN:
                 if event.button == 1:   # left press
-                    GraphRenderer.GraphRenderer.leftMbPress(pg.mouse.get_pos())
+                    ClickHandler.ClickHandler.leftMbPress(pg.mouse.get_pos())
             # mouse release
             if event.type == pg.MOUSEBUTTONUP:
                 if event.button == 1:   # left release
-                    GraphRenderer.GraphRenderer.leftMbRelease(pg.mouse.get_pos())
+                    ClickHandler.ClickHandler.leftMbRelease(pg.mouse.get_pos())
 
             # if any keyboard key pressed
             elif event.type == pg.KEYDOWN:
@@ -98,11 +103,12 @@ def main():
             console_y += console_y_increment
 
         # calculat node positions and render them
-        GraphRenderer.GraphRenderer.computeForces()
-        GraphRenderer.GraphRenderer.renderNodes(screen)
+        UIGraph.GraphRenderer.computeForces()
+        UIGraph.GraphRenderer.renderNodes(screen)
         #GraphRenderer.GraphRenderer.renderNodeForces(screen)
-        GraphRenderer.GraphRenderer.renderNodeConnections(screen)
-        GraphRenderer.GraphRenderer.renderSelectionBox(screen)
+        UIGraph.GraphRenderer.renderNodeConnections(screen)
+        ClickHandler.ClickHandler.renderSelectionBox(screen)
+        UIButton.UIButton.renderButtons(screen)
 
         # wipe the display
         pg.display.flip()

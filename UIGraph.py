@@ -6,14 +6,24 @@ from random import randint
 
 class GraphRenderer:
     name_to_node = dict()
-    mouse_press_coords = (0,0)  # mouse coords at time of left click
-    mouse_release_coords = (0,0)    # mouse coords at time of left release
-    mouse_is_down = False
+    selected_nodes = set() # keys of selected nodes
 
     def addNodes(nodenames,xrange, yrange):
         for nodename in nodenames:
             if nodename not in GraphRenderer.name_to_node.keys():
                 GraphRenderer.name_to_node[nodename] = NR.NodeRenderer(nodename,randint(0,xrange),randint(0,yrange))
+
+    def removeNodes(nodenames):
+        for node in nodenames:
+            GraphRenderer.removeNode(node)
+
+
+    def removeNode(nodename):
+        if nodename in GraphRenderer.name_to_node.keys():
+            for node in GraphRenderer.name_to_node.values():
+                node.removeConnection(GraphRenderer.name_to_node[nodename])
+
+            GraphRenderer.name_to_node.pop(nodename)
 
     def addConnections(left,right):
         GraphRenderer.name_to_node[left].addConnection(GraphRenderer.name_to_node[right])
@@ -64,11 +74,15 @@ class GraphRenderer:
         xedges.sort()
         yedges = [coords1[1],coords2[1]]
         yedges.sort()
+
+        GraphRenderer.selected_nodes = set()
+
         for node in GraphRenderer.name_to_node.values():
             node.selected = False
             if node.x >= xedges[0] and node.x <= xedges[1]:
                 if node.y >= yedges[0] and node.y <= yedges[1]:
                     node.selected = True
+                    GraphRenderer.selected_nodes.add(node.name)
 
 
 
@@ -85,21 +99,3 @@ class GraphRenderer:
             for conn in node.connections:
                 pg.draw.line(surface, color , [int(node.x),int(node.y)],[int(conn.x),int(conn.y)], 1)
 
-    def leftMbPress(coords = (0,0)):
-        GraphRenderer.mouse_press_coords = coords
-        GraphRenderer.mouse_is_down = True
-
-    def leftMbRelease(coords=(0, 0)):
-        GraphRenderer.mouse_release_coords = coords
-        GraphRenderer.mouse_is_down = False
-
-        # select group of nodes if you made a selection box big enough to not be an accident or single click
-        if VectorMath.distance(GraphRenderer.mouse_press_coords, GraphRenderer.mouse_release_coords) > 10:
-            GraphRenderer.selectNodes(GraphRenderer.mouse_press_coords, GraphRenderer.mouse_release_coords)
-
-    def renderSelectionBox(surface, color = (255,255,255)):
-        # renders a selection box in given color
-        if GraphRenderer.mouse_is_down:
-            width = pg.mouse.get_pos()[0] - GraphRenderer.mouse_press_coords[0]
-            height =  pg.mouse.get_pos()[1] - GraphRenderer.mouse_press_coords[1]
-            pg.draw.rect(surface, color, [GraphRenderer.mouse_press_coords,(width,height)], 1)

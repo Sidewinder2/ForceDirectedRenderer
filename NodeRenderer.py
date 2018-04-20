@@ -18,7 +18,8 @@ class NodeRenderer:
         self.connections.add(node)
 
     def removeConnection(self,node):
-        self.connections.remove(node)
+        if node in self.connections:
+            self.connections.remove(node)
 
     def renderNode(self,surface):
         if self.selected:
