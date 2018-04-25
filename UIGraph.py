@@ -30,6 +30,67 @@ class GraphRenderer:
         GraphRenderer.name_to_node[right].addConnection(GraphRenderer.name_to_node[left])
 
 
+    def computeForcesGrid(constant_force = 2,strong_force = 2000, friction_threshold = 1, gridsize = 200, strong_force_radius = 150):
+
+        gridspace = dict()  # maintains coordinate tuple to set conversion for rapidly obtaining coordinates
+        # calculate the grid
+        for node in GraphRenderer.name_to_node.values():
+            grid_coords = (node.x - (node.x % gridsize),node.y - (node.y % gridsize))
+            if grid_coords not in gridspace.keys():
+                gridspace[grid_coords] = set()
+                gridspace[grid_coords].add(node)
+
+        # calculate the forces for all nodes
+        for node in GraphRenderer.name_to_node.values():
+            vect_sum_x = 0
+            vect_sum_y = 0
+            vect_sum_count = 0
+
+            #create pulling forces between adjacent nodes
+            for conn in node.connections:
+                if conn != node:
+                    dist = VectorMath.distance((node.x,node.y),(conn.x,conn.y))
+                    direction = VectorMath.point_direction((node.x, node.y), (conn.x, conn.y))
+                    pull_vect = VectorMath.polar_to_cartesian(direction,constant_force * log10(dist))
+                    vect_sum_x += pull_vect[0]
+                    vect_sum_y += pull_vect[1]
+                    vect_sum_count += 1
+
+            # create pushing forces from all nodes away from each other
+
+            for conn in GraphRenderer.name_to_node.values():
+                if conn != node:
+                    dist = VectorMath.distance((node.x, node.y), (conn.x, conn.y))
+                    direction = VectorMath.point_direction((conn.x, conn.y), (node.x, node.y))
+                    pull_vect = VectorMath.polar_to_cartesian(direction,strong_force / max([1,dist ** 2]))
+                    vect_sum_x += pull_vect[0]
+                    vect_sum_y += pull_vect[1]
+                    vect_sum_count += 1
+
+            # store the new position in a different variable
+            node.new_x = vect_sum_x
+            node.new_y = vect_sum_y
+
+        # update nodes with new positions
+        for node in GraphRenderer.name_to_node.values():
+            if VectorMath.distance((0,0),(node.new_x,node.new_y)) > friction_threshold:
+                node.x += node.new_x #/ len(GraphRenderer.name_to_node.values()) * 2
+                node.y += node.new_y #/ len(GraphRenderer.name_to_node.values()) * 2
+
+    def getNodeGrid(gridsize = 200):
+        gridspace = dict()  # maintains coordinate tuple to set conversion for rapidly obtaining coordinates
+        # calculate the grid
+        for node in GraphRenderer.name_to_node.values():
+            grid_coords = (node.x - (node.x % gridsize), node.y - (node.y % gridsize))
+            if grid_coords not in gridspace.keys():
+                gridspace[grid_coords] = set()
+            gridspace[grid_coords].add(node)
+
+        return gridspace
+
+    def getGridNeighbors(gridspace, coords, gridsize):
+        print("hi")
+
     def computeForces(constant_force = 2,strong_force = 2000, friction_threshold = 1):
         # calculate the forces for all nodes
         for node in GraphRenderer.name_to_node.values():

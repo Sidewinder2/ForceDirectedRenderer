@@ -27,7 +27,7 @@ def main():
 
     # create a list of numbers for node names
     nodes = list()
-    for x in range(200):
+    for x in range(20):
         nodes.append(str(x))
     # add a bunch of ndoes to the renderer
     UIGraph.GraphRenderer.addNodes(nodes, screen_width, screen_height)
@@ -36,14 +36,99 @@ def main():
     UIGraph.GraphRenderer.selectNodes((0, 0), (200, 200))
 
     # randomly add connections between the nodes
-    for x in range(200):
+    for x in range(20):
         UIGraph.GraphRenderer.addConnections(nodes[randint(0, len(nodes) - 1)], nodes[randint(0, len(nodes) - 1)])
 
     # create some buttons
     UIButton.GreenButton(coords = (300,40), dimensions = (200,20), text = "Remove Selected Nodes", color = (255,255,255), text_color = (255,255,255))
 
+
+
+
+
+    # wiki bot stuff
+    from selenium import webdriver
+    from time import sleep
+    from random import shuffle
+
+    gatherWikiStuff = False
+    visited_webpages = set()
+    unvisited_webpages = set()
+
+
+    webpage_queue = list()
+    total_link_count = 0
+    timedelay = 600
+
+    max_nodes = 1
+    max_page_links = 15
+
+    if gatherWikiStuff:
+
+        # initialize driver as chrome
+        driver = webdriver.Chrome()
+        # tell driver to go to website
+        current_url = 'https://en.wikipedia.org/wiki/Google'
+        driver.get(current_url)
+        sleep(1)
+
+        UIGraph.GraphRenderer.addNodes([current_url], screen_width, screen_height)
+        unvisited_webpages.add(current_url)
+        # Supergraph.addnode(current_url, override = False)
+
+
+
+
+
+
+
     # main loop
     while not console_shutdown:
+
+        # close wikibot when it's visited enough pages
+        if len(visited_webpages) >= max_nodes and gatherWikiStuff:
+            driver.close()
+            gatherWikiStuff = False
+
+        # wiki bot stuff
+        timedelay -= 1
+        if timedelay < 0 and gatherWikiStuff:
+            timedelay = 200
+            if (len(visited_webpages) < max_nodes and len(unvisited_webpages) > 0):
+                elems = driver.find_elements_by_xpath("//a[@href]")
+                page_link_count = 0  # tracks valid links per page
+                shuffle(elems)  # randomize the link order
+
+                for elem in elems:
+                    linktext = elem.get_attribute("href")
+                    if (max_page_links == -1) or (max_page_links > 0 and page_link_count < max_page_links):
+                        if is_valid_link(linktext):
+                            if linktext not in visited_webpages and linktext not in unvisited_webpages:
+                                # addnode(linktext, override = false)
+                                # addconnections(current_url, linktext)
+                                UIGraph.GraphRenderer.addNodes([linktext], screen_width, screen_height)
+                                UIGraph.GraphRenderer.addConnections(current_url,linktext)
+
+                                unvisited_webpages.add(linktext)
+                                webpage_queue.append(linktext)
+                                page_link_count += 1
+                                total_link_count += 1
+                    else:
+                        break
+
+                print(current_url, "page edges: ", page_link_count, "total nodes: ",
+                      len(visited_webpages) + len(unvisited_webpages), "total edges: ", total_link_count)
+
+                # move on to the next page
+                current_url = webpage_queue.pop(0)
+                unvisited_webpages.remove(current_url)
+                visited_webpages.add(current_url)
+                driver.get(current_url)
+
+
+
+
+
 
         # fill the screen with a color
         screen.fill((30, 30, 30))
@@ -110,6 +195,8 @@ def main():
         ClickHandler.ClickHandler.renderSelectionBox(screen)
         UIButton.UIButton.renderButtons(screen)
 
+        #print(UIGraph.GraphRenderer.getNodeGrid(200))
+
         # wipe the display
         pg.display.flip()
         clock.tick(30)
@@ -117,7 +204,27 @@ def main():
 
 
 
+
+def is_valid_link(linktext):
+    if linktext.count("https://en.wikipedia.org") == 0:
+        return False
+
+    blacklist_items = ["#","Portal:","Special:","Category:","Help:","Wikipedia:","Template:","Template_talk:",
+                       "Talk:","File:","Help:","w/index",".png",".jpg"]
+    for item in blacklist_items:
+        if linktext.count(item):
+            return False
+    return True
+
+
+
+
+
+
+
+
 if __name__ == '__main__':
     pg.init()
     main()
+
     pg.quit()
