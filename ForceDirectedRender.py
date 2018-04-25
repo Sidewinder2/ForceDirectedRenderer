@@ -27,7 +27,7 @@ def main():
 
     # create a list of numbers for node names
     nodes = list()
-    for x in range(20):
+    for x in range(0):
         nodes.append(str(x))
     # add a bunch of ndoes to the renderer
     UIGraph.GraphRenderer.addNodes(nodes, screen_width, screen_height)
@@ -36,7 +36,7 @@ def main():
     UIGraph.GraphRenderer.selectNodes((0, 0), (200, 200))
 
     # randomly add connections between the nodes
-    for x in range(20):
+    for x in range(0):
         UIGraph.GraphRenderer.addConnections(nodes[randint(0, len(nodes) - 1)], nodes[randint(0, len(nodes) - 1)])
 
     # create some buttons
@@ -51,7 +51,7 @@ def main():
     from time import sleep
     from random import shuffle
 
-    gatherWikiStuff = False
+    gatherWikiStuff = True
     visited_webpages = set()
     unvisited_webpages = set()
 
@@ -60,8 +60,8 @@ def main():
     total_link_count = 0
     timedelay = 600
 
-    max_nodes = 1
-    max_page_links = 15
+    max_nodes = 40
+    max_page_links = 5
 
     if gatherWikiStuff:
 
@@ -72,7 +72,7 @@ def main():
         driver.get(current_url)
         sleep(1)
 
-        UIGraph.GraphRenderer.addNodes([current_url], screen_width, screen_height)
+        UIGraph.GraphRenderer.addNodes([current_url.replace('https://en.wikipedia.org/wiki/',"")], screen_width, screen_height)
         unvisited_webpages.add(current_url)
         # Supergraph.addnode(current_url, override = False)
 
@@ -93,7 +93,7 @@ def main():
         # wiki bot stuff
         timedelay -= 1
         if timedelay < 0 and gatherWikiStuff:
-            timedelay = 200
+            timedelay = 150
             if (len(visited_webpages) < max_nodes and len(unvisited_webpages) > 0):
                 elems = driver.find_elements_by_xpath("//a[@href]")
                 page_link_count = 0  # tracks valid links per page
@@ -106,8 +106,8 @@ def main():
                             if linktext not in visited_webpages and linktext not in unvisited_webpages:
                                 # addnode(linktext, override = false)
                                 # addconnections(current_url, linktext)
-                                UIGraph.GraphRenderer.addNodes([linktext], screen_width, screen_height)
-                                UIGraph.GraphRenderer.addConnections(current_url,linktext)
+                                UIGraph.GraphRenderer.addNodes([linktext.replace('https://en.wikipedia.org/wiki/',"")], screen_width, screen_height)
+                                UIGraph.GraphRenderer.addConnections(current_url.replace('https://en.wikipedia.org/wiki/',""),linktext.replace('https://en.wikipedia.org/wiki/',""))
 
                                 unvisited_webpages.add(linktext)
                                 webpage_queue.append(linktext)
@@ -187,15 +187,16 @@ def main():
             screen.blit(txt_surface, (console_x, console_y))
             console_y += console_y_increment
 
-        # calculat node positions and render them
-        UIGraph.GraphRenderer.computeForces()
-        UIGraph.GraphRenderer.renderNodes(screen)
+        # calculate node positions and render them
+        #UIGraph.GraphRenderer.computeForces()
+        UIGraph.GraphRenderer.computeForcesGrid()
+        UIGraph.GraphRenderer.renderNodes(screen, False)
         #GraphRenderer.GraphRenderer.renderNodeForces(screen)
         UIGraph.GraphRenderer.renderNodeConnections(screen)
         ClickHandler.ClickHandler.renderSelectionBox(screen)
         UIButton.UIButton.renderButtons(screen)
 
-        #print(UIGraph.GraphRenderer.getNodeGrid(200))
+        #print(UIGraph.GraphRenderer.getNodeGridSpace(200))
 
         # wipe the display
         pg.display.flip()
